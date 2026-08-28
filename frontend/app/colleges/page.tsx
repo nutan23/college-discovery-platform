@@ -13,6 +13,10 @@ type College = {
   description: string;
 };
 
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://college-discovery-api-ffm0.onrender.com";
+
 export default function Home() {
   const router = useRouter();
 
@@ -28,10 +32,11 @@ export default function Home() {
 
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  /* =============================
-     FETCH COLLEGES
-  ============================= */
+  // ==========================================
+  // FETCH COLLEGES
+  // ==========================================
   const fetchColleges = async (
     pageNum = 1,
     customValues?: {
@@ -45,6 +50,7 @@ export default function Home() {
   ) => {
     try {
       setLoading(true);
+      setError("");
 
       const params = new URLSearchParams();
 
@@ -98,10 +104,7 @@ export default function Home() {
       }
 
       if (currentMinPlacement) {
-        params.append(
-          "minPlacement",
-          currentMinPlacement
-        );
+        params.append("minPlacement", currentMinPlacement);
       }
 
       if (currentSort) {
@@ -109,11 +112,13 @@ export default function Home() {
       }
 
       const res = await fetch(
-        `https://college-discovery-api-ffm0.onrender.com?${params.toString()}`
+        `${API_URL}/colleges?${params.toString()}`
       );
 
       if (!res.ok) {
-        throw new Error("Failed to fetch colleges");
+        throw new Error(
+          `API request failed with status ${res.status}`
+        );
       }
 
       const data = await res.json();
@@ -121,22 +126,26 @@ export default function Home() {
       setColleges(data.results || []);
     } catch (error) {
       console.error("College fetch error:", error);
+
       setColleges([]);
+      setError(
+        "Unable to load colleges. Please try again."
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  /* =============================
-     INITIAL LOAD + PAGINATION
-  ============================= */
+  // ==========================================
+  // INITIAL LOAD + PAGINATION
+  // ==========================================
   useEffect(() => {
     fetchColleges(page);
   }, [page]);
 
-  /* =============================
-     SELECT FOR COMPARE
-  ============================= */
+  // ==========================================
+  // SELECT FOR COMPARE
+  // ==========================================
   const toggleSelect = (college: College) => {
     const exists = selected.some(
       (c) => c.id === college.id
@@ -166,10 +175,12 @@ export default function Home() {
     ]);
   };
 
-  /* =============================
-     APPLY FILTERS
-  ============================= */
+  // ==========================================
+  // APPLY FILTERS
+  // ==========================================
   const applyFilters = () => {
+    setSelected([]);
+
     if (page === 1) {
       fetchColleges(1);
     } else {
@@ -177,9 +188,9 @@ export default function Home() {
     }
   };
 
-  /* =============================
-     RESET FILTERS
-  ============================= */
+  // ==========================================
+  // RESET FILTERS
+  // ==========================================
   const resetFilters = () => {
     setSearch("");
     setLocation("");
@@ -248,7 +259,6 @@ export default function Home() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
 
-          {/* LOCATION */}
           <input
             type="text"
             placeholder="📍 Location"
@@ -259,7 +269,6 @@ export default function Home() {
             className="border border-gray-300 rounded-lg p-3"
           />
 
-          {/* MAX FEES */}
           <input
             type="number"
             placeholder="💰 Max Fees"
@@ -270,7 +279,6 @@ export default function Home() {
             className="border border-gray-300 rounded-lg p-3"
           />
 
-          {/* MIN RATING */}
           <select
             value={minRating}
             onChange={(e) =>
@@ -299,7 +307,6 @@ export default function Home() {
             </option>
           </select>
 
-          {/* MIN PLACEMENT */}
           <select
             value={minPlacement}
             onChange={(e) =>
@@ -330,7 +337,6 @@ export default function Home() {
             </option>
           </select>
 
-          {/* SORT */}
           <select
             value={sort}
             onChange={(e) =>
@@ -361,7 +367,6 @@ export default function Home() {
 
         </div>
 
-        {/* FILTER BUTTONS */}
         <div className="flex flex-wrap justify-center gap-3 mt-5">
 
           <button
@@ -409,8 +414,27 @@ export default function Home() {
         </div>
       )}
 
+      {/* ERROR */}
+      {!loading && error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center mb-6">
+
+          <p className="text-red-600 font-semibold">
+            ❌ {error}
+          </p>
+
+          <button
+            onClick={() => fetchColleges(1)}
+            className="mt-4 bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg"
+          >
+            Try Again
+          </button>
+
+        </div>
+      )}
+
       {/* NO RESULTS */}
       {!loading &&
+        !error &&
         colleges.length === 0 && (
           <div className="bg-white rounded-xl shadow p-8 text-center">
 
@@ -454,17 +478,14 @@ export default function Home() {
                   }`}
                 >
 
-                  {/* NAME */}
                   <h2 className="text-xl font-bold text-blue-600 mb-3">
                     {college.name}
                   </h2>
 
-                  {/* LOCATION */}
                   <p className="text-gray-600 mb-2">
                     📍 {college.location}
                   </p>
 
-                  {/* FEES */}
                   <p className="text-gray-700 mb-2">
                     💰 Fees:{" "}
                     <span className="font-semibold">
@@ -477,12 +498,10 @@ export default function Home() {
                     </span>
                   </p>
 
-                  {/* RATING */}
                   <p className="text-yellow-600 font-medium mb-2">
                     ⭐ {college.rating}
                   </p>
 
-                  {/* PLACEMENT */}
                   <p className="text-green-600 font-semibold">
                     📊{" "}
                     {
@@ -495,7 +514,6 @@ export default function Home() {
                     Click card to view details →
                   </p>
 
-                  {/* COMPARE SELECT */}
                   <div
                     className="border-t mt-4 pt-4"
                     onClick={(e) =>

@@ -16,6 +16,10 @@ type College = {
   courses?: string;
 };
 
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://college-discovery-api-ffm0.onrender.com";
+
 export default function CollegeDetail() {
   const params = useParams();
   const router = useRouter();
@@ -35,20 +39,28 @@ export default function CollegeDetail() {
         setError("");
 
         const res = await fetch(
-          `https://college-discovery-api-ffm0.onrender.com/${id}`
+          `${API_URL}/colleges/${id}`
         );
 
         if (!res.ok) {
-          throw new Error("Failed to fetch college");
+          throw new Error(
+            `Failed to fetch college. Status: ${res.status}`
+          );
         }
 
         const data = await res.json();
 
         setCollege(data);
       } catch (error) {
-        console.error("College fetch error:", error);
+        console.error(
+          "College fetch error:",
+          error
+        );
 
-        setError("Unable to load college details.");
+        setError(
+          "Unable to load college details."
+        );
+
         setCollege(null);
       } finally {
         setLoading(false);
@@ -77,8 +89,10 @@ export default function CollegeDetail() {
         </p>
 
         <button
-          onClick={() => router.push("/colleges")}
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg"
+          onClick={() =>
+            router.push("/colleges")
+          }
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg"
         >
           ← Back to Colleges
         </button>
@@ -87,12 +101,15 @@ export default function CollegeDetail() {
     );
   }
 
-  const coursesArray = college.courses
-    ? college.courses
-        .split(",")
-        .map((course) => course.trim())
-        .filter(Boolean)
-    : [];
+  const coursesArray =
+    college.courses
+      ? college.courses
+          .split(",")
+          .map((course) =>
+            course.trim()
+          )
+          .filter(Boolean)
+      : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-100">
@@ -102,7 +119,9 @@ export default function CollegeDetail() {
         <div className="max-w-6xl mx-auto px-6 py-5">
 
           <button
-            onClick={() => router.push("/colleges")}
+            onClick={() =>
+              router.push("/colleges")
+            }
             className="text-blue-600 hover:text-blue-800 font-medium"
           >
             ← Back to Colleges
@@ -153,19 +172,31 @@ export default function CollegeDetail() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
 
           <div className="bg-white rounded-2xl shadow-md p-6 text-center">
-            <div className="text-3xl mb-2">💰</div>
+
+            <div className="text-3xl mb-2">
+              💰
+            </div>
 
             <p className="text-gray-500">
               Fees
             </p>
 
             <p className="text-2xl font-bold text-gray-800 mt-1">
-              ₹{Number(college.fees).toLocaleString("en-IN")}
+              ₹
+              {Number(
+                college.fees
+              ).toLocaleString(
+                "en-IN"
+              )}
             </p>
+
           </div>
 
           <div className="bg-white rounded-2xl shadow-md p-6 text-center">
-            <div className="text-3xl mb-2">⭐</div>
+
+            <div className="text-3xl mb-2">
+              ⭐
+            </div>
 
             <p className="text-gray-500">
               Rating
@@ -174,10 +205,14 @@ export default function CollegeDetail() {
             <p className="text-2xl font-bold text-yellow-600 mt-1">
               {college.rating}
             </p>
+
           </div>
 
           <div className="bg-white rounded-2xl shadow-md p-6 text-center">
-            <div className="text-3xl mb-2">📊</div>
+
+            <div className="text-3xl mb-2">
+              📊
+            </div>
 
             <p className="text-gray-500">
               Placement Rate
@@ -186,6 +221,7 @@ export default function CollegeDetail() {
             <p className="text-2xl font-bold text-green-600 mt-1">
               {college.placement_percentage}%
             </p>
+
           </div>
 
         </div>
@@ -199,6 +235,7 @@ export default function CollegeDetail() {
 
           {college.address ? (
             <>
+
               <p className="text-gray-700 leading-7">
                 {college.address}
               </p>
@@ -213,6 +250,7 @@ export default function CollegeDetail() {
               >
                 🗺️ View on Google Maps →
               </a>
+
             </>
           ) : (
             <p className="text-gray-500">
@@ -232,14 +270,16 @@ export default function CollegeDetail() {
           {coursesArray.length > 0 ? (
             <div className="flex flex-wrap gap-3">
 
-              {coursesArray.map((course, index) => (
-                <span
-                  key={index}
-                  className="bg-blue-50 text-blue-700 border border-blue-200 px-4 py-2 rounded-full font-medium"
-                >
-                  {course}
-                </span>
-              ))}
+              {coursesArray.map(
+                (course, index) => (
+                  <span
+                    key={index}
+                    className="bg-blue-50 text-blue-700 border border-blue-200 px-4 py-2 rounded-full font-medium"
+                  >
+                    {course}
+                  </span>
+                )
+              )}
 
             </div>
           ) : (
@@ -258,7 +298,8 @@ export default function CollegeDetail() {
           </h2>
 
           <p className="text-gray-700 leading-8">
-            {college.description || "No description available."}
+            {college.description ||
+              "No description available."}
           </p>
 
         </div>
