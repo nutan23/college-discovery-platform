@@ -35,7 +35,7 @@ export default function CollegeDetail() {
         setError("");
 
         const res = await fetch(
-          `http://localhost:5000/colleges/${id}`
+          `https://college-discovery-api-ffm0.onrender.com/${id}`
         );
 
         if (!res.ok) {

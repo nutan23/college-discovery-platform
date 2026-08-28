@@ -109,7 +109,7 @@ export default function Home() {
       }
 
       const res = await fetch(
-        `http://localhost:5000/colleges?${params.toString()}`
+        `https://college-discovery-api-ffm0.onrender.com?${params.toString()}`
       );
 
       if (!res.ok) {
