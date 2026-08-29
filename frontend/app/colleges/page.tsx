@@ -13,9 +13,7 @@ type College = {
   description: string;
 };
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  "https://college-discovery-api-ffm0.onrender.com";
+const API_URL = "https://college-discovery-api-ffm0.onrender.com";
 
 export default function Home() {
   const router = useRouter();
@@ -111,9 +109,17 @@ export default function Home() {
         params.append("sort", currentSort);
       }
 
-      const res = await fetch(
-        `${API_URL}/colleges?${params.toString()}`
-      );
+      const url = `${API_URL}/colleges?${params.toString()}`;
+
+      console.log("Fetching colleges from:", url);
+
+      const res = await fetch(url, {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+        },
+        cache: "no-store",
+      });
 
       if (!res.ok) {
         throw new Error(
@@ -123,9 +129,24 @@ export default function Home() {
 
       const data = await res.json();
 
-      setColleges(data.results || []);
-    } catch (error) {
-      console.error("College fetch error:", error);
+      console.log("College API response:", data);
+
+      // Supports:
+      // { results: [...] }
+      // { colleges: [...] }
+      // [...]
+      if (Array.isArray(data)) {
+        setColleges(data);
+      } else if (Array.isArray(data.results)) {
+        setColleges(data.results);
+      } else if (Array.isArray(data.colleges)) {
+        setColleges(data.colleges);
+      } else {
+        console.error("Unexpected API response:", data);
+        setColleges([]);
+      }
+    } catch (err) {
+      console.error("College fetch error:", err);
 
       setColleges([]);
       setError(
@@ -141,6 +162,7 @@ export default function Home() {
   // ==========================================
   useEffect(() => {
     fetchColleges(page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
   // ==========================================
@@ -162,10 +184,7 @@ export default function Home() {
     }
 
     if (selected.length >= 3) {
-      alert(
-        "You can select maximum 3 colleges"
-      );
-
+      alert("You can select maximum 3 colleges");
       return;
     }
 
@@ -215,6 +234,7 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-100 p-6 md:p-8">
 
       {/* HEADER */}
+
       <h1 className="text-4xl font-bold text-center text-gray-800 mb-3">
         🎓 College Discovery Platform
       </h1>
@@ -224,6 +244,7 @@ export default function Home() {
       </p>
 
       {/* SEARCH */}
+
       <div className="flex flex-col md:flex-row gap-3 justify-center mb-6">
 
         <input
@@ -251,6 +272,7 @@ export default function Home() {
       </div>
 
       {/* ADVANCED FILTERS */}
+
       <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
 
         <h2 className="text-xl font-semibold text-gray-800 mb-5">
@@ -290,29 +312,16 @@ export default function Home() {
               ⭐ Minimum Rating
             </option>
 
-            <option value="3">
-              3.0+
-            </option>
-
-            <option value="3.5">
-              3.5+
-            </option>
-
-            <option value="4">
-              4.0+
-            </option>
-
-            <option value="4.5">
-              4.5+
-            </option>
+            <option value="3">3.0+</option>
+            <option value="3.5">3.5+</option>
+            <option value="4">4.0+</option>
+            <option value="4.5">4.5+</option>
           </select>
 
           <select
             value={minPlacement}
             onChange={(e) =>
-              setMinPlacement(
-                e.target.value
-              )
+              setMinPlacement(e.target.value)
             }
             className="border border-gray-300 rounded-lg p-3 bg-white"
           >
@@ -320,21 +329,10 @@ export default function Home() {
               📊 Min Placement
             </option>
 
-            <option value="70">
-              70%+
-            </option>
-
-            <option value="80">
-              80%+
-            </option>
-
-            <option value="85">
-              85%+
-            </option>
-
-            <option value="90">
-              90%+
-            </option>
+            <option value="70">70%+</option>
+            <option value="80">80%+</option>
+            <option value="85">85%+</option>
+            <option value="90">90%+</option>
           </select>
 
           <select
@@ -388,6 +386,7 @@ export default function Home() {
       </div>
 
       {/* COMPARE BUTTON */}
+
       {selected.length >= 2 && (
         <div className="text-center mb-7">
 
@@ -408,6 +407,7 @@ export default function Home() {
       )}
 
       {/* LOADING */}
+
       {loading && (
         <div className="text-center text-lg text-gray-700 py-10">
           🔄 Loading colleges...
@@ -415,6 +415,7 @@ export default function Home() {
       )}
 
       {/* ERROR */}
+
       {!loading && error && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center mb-6">
 
@@ -433,6 +434,7 @@ export default function Home() {
       )}
 
       {/* NO RESULTS */}
+
       {!loading &&
         !error &&
         colleges.length === 0 && (
@@ -450,7 +452,9 @@ export default function Home() {
         )}
 
       {/* COLLEGE CARDS */}
+
       {!loading &&
+        !error &&
         colleges.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
@@ -458,8 +462,7 @@ export default function Home() {
 
               const isSelected =
                 selected.some(
-                  (c) =>
-                    c.id === college.id
+                  (c) => c.id === college.id
                 );
 
               return (
@@ -470,8 +473,7 @@ export default function Home() {
                       `/college/${college.id}`
                     )
                   }
-                  className={`bg-white rounded-2xl shadow-lg p-5 hover:shadow-2xl hover:-translate-y-1 transition duration-300 border cursor-pointer
-                  ${
+                  className={`bg-white rounded-2xl shadow-lg p-5 hover:shadow-2xl hover:-translate-y-1 transition duration-300 border cursor-pointer ${
                     isSelected
                       ? "border-blue-500 ring-2 ring-blue-200"
                       : "border-gray-100"
@@ -503,11 +505,7 @@ export default function Home() {
                   </p>
 
                   <p className="text-green-600 font-semibold">
-                    📊{" "}
-                    {
-                      college.placement_percentage
-                    }
-                    % Placement
+                    📊 {college.placement_percentage}% Placement
                   </p>
 
                   <p className="text-sm text-blue-500 mt-4">
@@ -525,13 +523,9 @@ export default function Home() {
 
                       <input
                         type="checkbox"
-                        checked={
-                          isSelected
-                        }
+                        checked={isSelected}
                         onChange={() =>
-                          toggleSelect(
-                            college
-                          )
+                          toggleSelect(college)
                         }
                         className="w-4 h-4 cursor-pointer"
                       />
@@ -558,15 +552,13 @@ export default function Home() {
         )}
 
       {/* PAGINATION */}
+
       <div className="mt-10 flex justify-center items-center gap-5">
 
         <button
           onClick={() =>
             setPage((prev) =>
-              Math.max(
-                prev - 1,
-                1
-              )
+              Math.max(prev - 1, 1)
             )
           }
           disabled={page === 1}
@@ -581,14 +573,9 @@ export default function Home() {
 
         <button
           onClick={() =>
-            setPage(
-              (prev) =>
-                prev + 1
-            )
+            setPage((prev) => prev + 1)
           }
-          disabled={
-            colleges.length < 10
-          }
+          disabled={colleges.length < 10}
           className="bg-gray-300 hover:bg-gray-400 px-5 py-2 rounded-lg disabled:opacity-40"
         >
           Next ➡

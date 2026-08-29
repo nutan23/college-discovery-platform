@@ -10,39 +10,69 @@ type College = {
   fees: number;
   rating: number;
   placement_percentage: number;
-  description: string;
+  description?: string;
   address?: string;
   website?: string;
   courses?: string;
 };
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  "https://college-discovery-api-ffm0.onrender.com";
+const API_URL = "https://college-discovery-api-ffm0.onrender.com";
 
 export default function CollegeDetail() {
   const params = useParams();
   const router = useRouter();
 
-  const id = params.id as string;
+  const id =
+    typeof params.id === "string"
+      ? params.id
+      : Array.isArray(params.id)
+      ? params.id[0]
+      : "";
 
-  const [college, setCollege] = useState<College | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [college, setCollege] =
+    useState<College | null>(null);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
 
   useEffect(() => {
-    if (!id) return;
+    if (!id) {
+      setError("Invalid college ID.");
+      setLoading(false);
+      return;
+    }
 
     const fetchCollege = async () => {
       try {
         setLoading(true);
         setError("");
 
-        const res = await fetch(
-          `${API_URL}/colleges/${id}`
+        const url =
+          `${API_URL}/colleges/${encodeURIComponent(id)}`;
+
+        console.log(
+          "Fetching college:",
+          url
         );
 
+        const res = await fetch(url, {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+          cache: "no-store",
+        });
+
         if (!res.ok) {
+          if (res.status === 404) {
+            throw new Error(
+              "College not found."
+            );
+          }
+
           throw new Error(
             `Failed to fetch college. Status: ${res.status}`
           );
@@ -50,24 +80,48 @@ export default function CollegeDetail() {
 
         const data = await res.json();
 
-        setCollege(data);
-      } catch (error) {
-        console.error(
-          "College fetch error:",
-          error
+        console.log(
+          "College details:",
+          data
         );
 
-        setError(
-          "Unable to load college details."
+        const collegeData =
+          data.college || data.result || data;
+
+        if (
+          !collegeData ||
+          typeof collegeData !== "object"
+        ) {
+          throw new Error(
+            "Invalid college data received."
+          );
+        }
+
+        setCollege(collegeData);
+
+      } catch (err) {
+        console.error(
+          "College fetch error:",
+          err
         );
 
         setCollege(null);
+
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError(
+            "Unable to load college details."
+          );
+        }
+
       } finally {
         setLoading(false);
       }
     };
 
     fetchCollege();
+
   }, [id]);
 
   if (loading) {
@@ -115,7 +169,9 @@ export default function CollegeDetail() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-100">
 
       {/* HEADER */}
+
       <div className="bg-white shadow-sm">
+
         <div className="max-w-6xl mx-auto px-6 py-5">
 
           <button
@@ -128,11 +184,13 @@ export default function CollegeDetail() {
           </button>
 
         </div>
+
       </div>
 
       <main className="max-w-6xl mx-auto px-6 py-10">
 
         {/* TITLE */}
+
         <div className="bg-white rounded-3xl shadow-xl p-8 mb-8">
 
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
@@ -169,6 +227,7 @@ export default function CollegeDetail() {
         </div>
 
         {/* STATS */}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
 
           <div className="bg-white rounded-2xl shadow-md p-6 text-center">
@@ -227,6 +286,7 @@ export default function CollegeDetail() {
         </div>
 
         {/* ADDRESS */}
+
         <div className="bg-white rounded-2xl shadow-md p-7 mb-8">
 
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
@@ -261,6 +321,7 @@ export default function CollegeDetail() {
         </div>
 
         {/* COURSES */}
+
         <div className="bg-white rounded-2xl shadow-md p-7 mb-8">
 
           <h2 className="text-2xl font-bold text-gray-800 mb-5">
@@ -291,6 +352,7 @@ export default function CollegeDetail() {
         </div>
 
         {/* ABOUT */}
+
         <div className="bg-white rounded-2xl shadow-md p-7 mb-8">
 
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
@@ -305,6 +367,7 @@ export default function CollegeDetail() {
         </div>
 
         {/* WEBSITE */}
+
         <div className="bg-white rounded-2xl shadow-md p-7">
 
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
@@ -329,6 +392,7 @@ export default function CollegeDetail() {
         </div>
 
       </main>
+
     </div>
   );
 }

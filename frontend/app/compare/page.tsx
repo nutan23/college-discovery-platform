@@ -1,11 +1,18 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import {
+  Suspense,
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  useSearchParams,
+  useRouter,
+} from "next/navigation";
 
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  "http://localhost:5000";
+  "https://college-discovery-api-ffm0.onrender.com";
 
 type College = {
   id: number;
@@ -17,78 +24,160 @@ type College = {
 };
 
 function CompareContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
+  const searchParams =
+    useSearchParams();
 
-  const ids = searchParams.get("ids");
+  const router =
+    useRouter();
 
-  const [colleges, setColleges] = useState<College[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const ids =
+    searchParams.get("ids");
+
+  const [colleges, setColleges] =
+    useState<College[]>([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [error, setError] =
+    useState("");
 
   useEffect(() => {
+
     const fetchColleges = async () => {
+
       if (!ids) {
-        setError("No colleges selected for comparison.");
+        setError(
+          "No colleges selected for comparison."
+        );
+
         setLoading(false);
+
         return;
       }
 
-      const idArray = ids.split(",");
+      const idArray =
+        ids
+          .split(",")
+          .map((id) => id.trim())
+          .filter(Boolean);
+
+      if (idArray.length < 2) {
+        setError(
+          "Please select at least 2 colleges for comparison."
+        );
+
+        setLoading(false);
+
+        return;
+      }
 
       try {
+
         setLoading(true);
         setError("");
 
-        const results = await Promise.all(
-          idArray.map(async (id) => {
-            const res = await fetch(
-              `${API_URL}/colleges/${id}`
-            );
+        const results =
+          await Promise.all(
 
-            if (!res.ok) {
-              throw new Error(
-                `Failed to fetch college ${id}`
-              );
-            }
+            idArray.map(
+              async (id) => {
 
-            return res.json();
-          })
-        );
+                const url =
+                  `${API_URL}/colleges/${encodeURIComponent(id)}`;
+
+                console.log(
+                  "Fetching comparison:",
+                  url
+                );
+
+                const res =
+                  await fetch(
+                    url,
+                    {
+                      method: "GET",
+
+                      headers: {
+                        Accept:
+                          "application/json",
+                      },
+
+                      cache: "no-store",
+                    }
+                  );
+
+                if (!res.ok) {
+
+                  throw new Error(
+                    `Failed to fetch college ${id}. Status: ${res.status}`
+                  );
+
+                }
+
+                const data =
+                  await res.json();
+
+                return (
+                  data.college ||
+                  data.result ||
+                  data
+                );
+              }
+            )
+          );
 
         setColleges(results);
+
       } catch (err) {
+
         console.error(
           "Comparison fetch error:",
           err
         );
 
-        setError(
-          "Unable to load comparison data."
-        );
+        setColleges([]);
+
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError(
+            "Unable to load comparison data."
+          );
+        }
+
       } finally {
+
         setLoading(false);
+
       }
     };
 
     fetchColleges();
+
   }, [ids]);
 
   if (loading) {
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
+
         <p className="text-xl text-gray-700">
           🔄 Loading comparison...
         </p>
+
       </div>
     );
   }
 
-  if (error || colleges.length === 0) {
+  if (
+    error ||
+    colleges.length === 0
+  ) {
+
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
 
-        <p className="text-red-500 text-xl mb-5">
+        <p className="text-red-500 text-xl mb-5 text-center px-5">
           ❌ {error || "No colleges found"}
         </p>
 
@@ -106,6 +195,7 @@ function CompareContent() {
   }
 
   return (
+
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-blue-100 p-6 md:p-8">
 
       {/* BACK BUTTON */}
@@ -136,6 +226,7 @@ function CompareContent() {
         <table className="w-full bg-white shadow-xl rounded-2xl overflow-hidden">
 
           <thead>
+
             <tr className="bg-blue-600 text-white">
 
               <th className="p-4 text-left">
@@ -144,16 +235,19 @@ function CompareContent() {
 
               {colleges.map(
                 (college) => (
+
                   <th
                     key={college.id}
                     className="p-4 text-center"
                   >
                     {college.name}
                   </th>
+
                 )
               )}
 
             </tr>
+
           </thead>
 
           <tbody className="text-gray-700">
@@ -168,12 +262,14 @@ function CompareContent() {
 
               {colleges.map(
                 (college) => (
+
                   <td
                     key={college.id}
                     className="p-4 text-center"
                   >
                     {college.location}
                   </td>
+
                 )
               )}
 
@@ -189,6 +285,7 @@ function CompareContent() {
 
               {colleges.map(
                 (college) => (
+
                   <td
                     key={college.id}
                     className="p-4 text-center font-medium"
@@ -200,6 +297,7 @@ function CompareContent() {
                       "en-IN"
                     )}
                   </td>
+
                 )
               )}
 
@@ -215,12 +313,14 @@ function CompareContent() {
 
               {colleges.map(
                 (college) => (
+
                   <td
                     key={college.id}
                     className="p-4 text-center"
                   >
                     {college.rating}
                   </td>
+
                 )
               )}
 
@@ -236,15 +336,14 @@ function CompareContent() {
 
               {colleges.map(
                 (college) => (
+
                   <td
                     key={college.id}
                     className="p-4 text-center text-green-600 font-semibold"
                   >
-                    {
-                      college.placement_percentage
-                    }
-                    %
+                    {college.placement_percentage}%
                   </td>
+
                 )
               )}
 
@@ -274,7 +373,9 @@ function CompareContent() {
 }
 
 export default function ComparePage() {
+
   return (
+
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center">
@@ -282,7 +383,9 @@ export default function ComparePage() {
         </div>
       }
     >
+
       <CompareContent />
+
     </Suspense>
   );
 }
